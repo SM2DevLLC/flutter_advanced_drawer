@@ -10,7 +10,7 @@ class AdvancedDrawer extends StatefulWidget {
     this.backdropColor,
     this.openRatio = 0.75,
     this.animationDuration = const Duration(milliseconds: 250),
-    this.animationCurve,
+    this.animationCurve: Curves.ease,
     this.childDecoration,
     this.animateChildDecoration = true,
   }) : super(key: key);
@@ -51,7 +51,7 @@ class _AdvancedDrawerState extends State<AdvancedDrawer>
     with SingleTickerProviderStateMixin {
   late AdvancedDrawerController _controller;
   late AnimationController _animationController;
-  late Animation<double> drawerScalingAnimation;
+  late Animation<Offset> drawerTranslateAnimation;
   late Animation<double> drawerOpacityAnimation;
   late Animation<double> screenScalingTween;
   late double _offsetValue;
@@ -72,20 +72,47 @@ class _AdvancedDrawerState extends State<AdvancedDrawer>
       value: _controller.value.visible! ? 1 : 0,
     );
 
-    drawerScalingAnimation = Tween<double>(
-      begin: 0.75,
-      end: 1.0,
-    ).animate(_animationController);
+    drawerTranslateAnimation = Tween<Offset>(
+      begin: Offset(0, 50),
+      end: Offset(0, 0),
+    ).animate(
+      CurvedAnimation(
+        curve: Interval(
+          0.3,
+          1,
+          curve: widget.animationCurve!,
+        ),
+        parent: _animationController,
+      ),
+    );
 
     drawerOpacityAnimation = Tween<double>(
-      begin: 0.25,
+      begin: 0.0,
       end: 1.0,
-    ).animate(_animationController);
+    ).animate(
+      CurvedAnimation(
+        curve: Interval(
+          0.3,
+          1,
+          curve: widget.animationCurve!,
+        ),
+        parent: _animationController,
+      ),
+    );
 
     screenScalingTween = Tween<double>(
       begin: 1.0,
       end: 0.85,
-    ).animate(_animationController);
+    ).animate(
+      CurvedAnimation(
+        curve: Interval(
+          0,
+          0.25,
+          curve: widget.animationCurve!,
+        ),
+        parent: _animationController,
+      ),
+    );
   }
 
   @override
@@ -104,12 +131,14 @@ class _AdvancedDrawerState extends State<AdvancedDrawer>
             final screenTranslateTween = Tween<Offset>(
               begin: Offset(0, 0),
               end: Offset(maxOffset, 0),
-            ).animate(widget.animationCurve != null
-                ? CurvedAnimation(
-                    parent: _animationController,
-                    curve: widget.animationCurve!,
-                  )
-                : _animationController);
+            ).animate(CurvedAnimation(
+              curve: Interval(
+                0,
+                0.5,
+                curve: widget.animationCurve!,
+              ),
+              parent: _animationController,
+            ));
 
             return Stack(
               children: <Widget>[
@@ -121,9 +150,8 @@ class _AdvancedDrawerState extends State<AdvancedDrawer>
                     builder: (context, child) {
                       return Opacity(
                         opacity: drawerOpacityAnimation.value,
-                        child: Transform.scale(
-                          alignment: Alignment.centerRight,
-                          scale: drawerScalingAnimation.value,
+                        child: Transform.translate(
+                          offset: drawerTranslateAnimation.value,
                           child: child,
                         ),
                       );
@@ -152,7 +180,7 @@ class _AdvancedDrawerState extends State<AdvancedDrawer>
                                     borderRadius: BorderRadius.zero,
                                   ),
                                   widget.childDecoration,
-                                  _animationController.value,
+                                  screenScalingTween.value,
                                 )
                               : widget.childDecoration,
                           child: child,
