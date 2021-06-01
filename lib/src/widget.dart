@@ -54,6 +54,7 @@ class _AdvancedDrawerState extends State<AdvancedDrawer>
   late Animation<Offset> drawerTranslateAnimation;
   late Animation<double> drawerOpacityAnimation;
   late Animation<double> screenScalingTween;
+  late Animation<double> cornerTween;
   late double _offsetValue;
   late Offset _freshPosition;
   Offset? _startPosition;
@@ -94,6 +95,20 @@ class _AdvancedDrawerState extends State<AdvancedDrawer>
         curve: Interval(
           0.3,
           1,
+          curve: widget.animationCurve!,
+        ),
+        parent: _animationController,
+      ),
+    );
+
+    cornerTween = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(
+      CurvedAnimation(
+        curve: Interval(
+          0,
+          0.25,
           curve: widget.animationCurve!,
         ),
         parent: _animationController,
@@ -180,7 +195,7 @@ class _AdvancedDrawerState extends State<AdvancedDrawer>
                                     borderRadius: BorderRadius.zero,
                                   ),
                                   widget.childDecoration,
-                                  screenScalingTween.value,
+                                  cornerTween.value,
                                 )
                               : widget.childDecoration,
                           child: child,
