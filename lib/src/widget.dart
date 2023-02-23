@@ -132,105 +132,116 @@ class _AdvancedDrawerState extends State<AdvancedDrawer>
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: widget.backdropColor,
-      child: GestureDetector(
-        onHorizontalDragStart: _handleDragStart,
-        onHorizontalDragUpdate: _handleDragUpdate,
-        onHorizontalDragEnd: _handleDragEnd,
-        onHorizontalDragCancel: _handleDragCancel,
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final maxOffset = constraints.maxWidth * widget.openRatio;
+    return Container(
+      decoration: BoxDecoration(
+          gradient: LinearGradient(
+              begin: Alignment.centerLeft,
+              end: Alignment.bottomRight,
+              colors: [
+            Color(0xff15112D),
+            Color(0xff221E3A),
+          ])),
+      child: Material(
+        // color: widget.backdropColor,
+        color: Colors.transparent,
+        child: GestureDetector(
+          onHorizontalDragStart: _handleDragStart,
+          onHorizontalDragUpdate: _handleDragUpdate,
+          onHorizontalDragEnd: _handleDragEnd,
+          onHorizontalDragCancel: _handleDragCancel,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final maxOffset = constraints.maxWidth * widget.openRatio;
 
-            final screenTranslateTween = Tween<Offset>(
-              begin: Offset(0, 0),
-              end: Offset(maxOffset, 0),
-            ).animate(CurvedAnimation(
-              curve: Interval(
-                0,
-                0.5,
-                curve: widget.animationCurve!,
-              ),
-              parent: _animationController,
-            ));
+              final screenTranslateTween = Tween<Offset>(
+                begin: Offset(0, 0),
+                end: Offset(maxOffset, 0),
+              ).animate(CurvedAnimation(
+                curve: Interval(
+                  0,
+                  0.5,
+                  curve: widget.animationCurve!,
+                ),
+                parent: _animationController,
+              ));
 
-            return Stack(
-              children: <Widget>[
-                // -------- DRAWER
-                FractionallySizedBox(
-                  widthFactor: widget.openRatio,
-                  child: AnimatedBuilder(
+              return Stack(
+                children: <Widget>[
+                  // -------- DRAWER
+                  FractionallySizedBox(
+                    widthFactor: widget.openRatio,
+                    child: AnimatedBuilder(
+                      animation: _animationController,
+                      builder: (context, child) {
+                        return Opacity(
+                          opacity: drawerOpacityAnimation.value,
+                          child: Transform.translate(
+                            offset: drawerTranslateAnimation.value,
+                            child: child,
+                          ),
+                        );
+                      },
+                      child: Container(
+                        alignment: Alignment.centerLeft,
+                        child: widget.drawer,
+                      ),
+                    ),
+                  ),
+                  // -------- CHILD
+                  AnimatedBuilder(
                     animation: _animationController,
                     builder: (context, child) {
-                      return Opacity(
-                        opacity: drawerOpacityAnimation.value,
-                        child: Transform.translate(
-                          offset: drawerTranslateAnimation.value,
-                          child: child,
+                      return Transform.translate(
+                        offset: screenTranslateTween.value,
+                        child: Transform.scale(
+                          alignment: Alignment.centerLeft,
+                          scale: screenScalingTween.value,
+                          child: Container(
+                            clipBehavior: Clip.antiAlias,
+                            decoration: widget.animateChildDecoration
+                                ? BoxDecoration.lerp(
+                                    const BoxDecoration(
+                                      boxShadow: const [],
+                                      borderRadius: BorderRadius.zero,
+                                    ),
+                                    widget.childDecoration,
+                                    cornerTween.value,
+                                  )
+                                : widget.childDecoration,
+                            child: child,
+                          ),
                         ),
                       );
                     },
-                    child: Container(
-                      alignment: Alignment.centerLeft,
-                      child: widget.drawer,
+                    child: ValueListenableBuilder<AdvancedDrawerValue>(
+                      valueListenable: _controller,
+                      builder: (_, value, child) {
+                        if (value.visible!) {
+                          return Stack(
+                            children: [
+                              child!,
+                              if (value.visible!)
+                                Material(
+                                  color: Colors.transparent,
+                                  child: InkWell(
+                                    onTap: _controller.hideDrawer,
+                                    highlightColor: Colors.transparent,
+                                    child: Container(),
+                                  ),
+                                ),
+                            ],
+                          );
+                        }
+
+                        return child!;
+                      },
+                      child: widget.child,
                     ),
                   ),
-                ),
-                // -------- CHILD
-                AnimatedBuilder(
-                  animation: _animationController,
-                  builder: (context, child) {
-                    return Transform.translate(
-                      offset: screenTranslateTween.value,
-                      child: Transform.scale(
-                        alignment: Alignment.centerLeft,
-                        scale: screenScalingTween.value,
-                        child: Container(
-                          clipBehavior: Clip.antiAlias,
-                          decoration: widget.animateChildDecoration
-                              ? BoxDecoration.lerp(
-                                  const BoxDecoration(
-                                    boxShadow: const [],
-                                    borderRadius: BorderRadius.zero,
-                                  ),
-                                  widget.childDecoration,
-                                  cornerTween.value,
-                                )
-                              : widget.childDecoration,
-                          child: child,
-                        ),
-                      ),
-                    );
-                  },
-                  child: ValueListenableBuilder<AdvancedDrawerValue>(
-                    valueListenable: _controller,
-                    builder: (_, value, child) {
-                      if (value.visible!) {
-                        return Stack(
-                          children: [
-                            child!,
-                            if (value.visible!)
-                              Material(
-                                color: Colors.transparent,
-                                child: InkWell(
-                                  onTap: _controller.hideDrawer,
-                                  highlightColor: Colors.transparent,
-                                  child: Container(),
-                                ),
-                              ),
-                          ],
-                        );
-                      }
-
-                      return child!;
-                    },
-                    child: widget.child,
-                  ),
-                ),
-              ],
-            );
-          },
+                ],
+              );
+            },
+          ),
         ),
       ),
     );
